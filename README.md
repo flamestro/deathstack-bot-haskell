@@ -1,0 +1,2 @@
+# dsBotHaskell
+Bot for DeathStacks
