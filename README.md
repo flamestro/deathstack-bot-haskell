@@ -6,7 +6,7 @@ It was a university project, which I wanted to share.  <br>
 This bot uses fen notation.  <br>
 Fen notation contains gamefield information AND the next player.  <br>
 As example "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r"  <br> 
-stand for red player next and GameField :  <br>
+stands for red player next and GameField :  <br>
 6[rr,rr,rr,rr,rr,rr]  <br>
 5[--,--,--,--,--,--]  <br>
 4[--,--,--,--,--,--]  <br>
