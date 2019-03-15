@@ -13,7 +13,7 @@ stand for red player next and GameField :  <br>
 3[--,--,--,--,--,--]  <br>
 2[--,--,--,--,--,--]  <br>
 1[bb,bb,bb,bb,bb,bb]  <br>
---a--b--c--d--e--f    <br>
+columns : a b c d e f    <br>
 Two characters are reserved for players: 'b' for blue and 'r' for red  <br>
 This bot has two main functionalities:  <br>
 listMoves fenNotation  <br>
