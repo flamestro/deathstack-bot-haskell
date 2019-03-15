@@ -1,71 +1,63 @@
---- module (NICHT AENDERN!)
 module DeathStacksBot where
---- imports (NICHT AENDERN!)
 import Data.Char
---- YOUR IMPLEMENTATION STARTS HERE ---
 
--- Mein Code funktioniert ohne Data.utils und Listmoves und getMove sind unter den TypClasses definiert
 
--- Dienen zur abstraktion des Codes
+-- The Width and the heigth of a Gamefield
 width_height  = 6
--- Nur fuer gerade Zahlen sicher getestet verhalten fuer Ungerade Zahlen vielleicht nicht wie erwuenscht 
--- Ab 6 dauert der Algorithmus knapp ueber 4 Minuten ich gehe ein Risiko ein mit der Iterationstiefe 8 und hoffe mein Bot siegt sonst
--- wuerde ich es auf 6 setzen, da die Werte immernoch gut approximiert sind und es so nur knapp eine Minute dauert
--- EDIT: Auf 6 gesetzt, da manche moegliche Boards bei mir zu lange brauchen
-iterationsTiefe = 8
+-- depth of minimax algorithm (shouldnt be higher than 8 (takes ~5 mins) 
+depth = 4
 
-data Move = Move {start::String, schritte::Int,end::String}
-data Moves = Moves Move Moves | EmptyMove
---MoveEvals speichern einen Move, das Spielbrett NACH dem Move und eine Bewertung nach einer implementierten bewertungsfunktion
-data MoveEval = MoveEval {move::Move,spielbrett:: Spielbrett, bewertung::Int}
-data Spielbrett = Spielbrett {kachel::Feld, spielfeld:: Spielbrett} | EmptyFeld
-data Feld = Kachel {spalte::Int,zeile::Int} | KachelmitValue {spalte::Int,zeile::Int,value::String} 
+data Move      = Move {start::String, steps::Int,end::String}
+data Moves     = Moves Move Moves | EmptyMove
+--MoveEvals save informations about a Move, a gameField after the Move and a rating
+data MoveEval  = MoveEval {move::Move,gameField:: GameField, rating::Int}
+data GameField = GameField {field::Field, spielfeld:: GameField} | EmptyField
+data Field     = Field {column::Int,row::Int} | FieldwValue {column::Int,row::Int,value::String} 
 
---dient dazu das Feld aus das ein Move fuehrt zu bestimmen
+--this class is created for Move ( to convert a moves endPos into a field 
 class ConvtoKachel a where
-            kachelOf :: a -> Feld
+            kachelOf :: a -> Field
 
 instance ConvtoKachel Move where 
-            kachelOf (Move start schritte end) | head end == 'a' = Kachel 1 (read (drop 1 end))
-                                               | head end == 'b' = Kachel 2 (read (drop 1 end))
-                                               | head end == 'c' = Kachel 3 (read (drop 1 end))
-                                               | head end == 'd' = Kachel 4 (read (drop 1 end))
-                                               | head end == 'e' = Kachel 5 (read (drop 1 end))
-                                               | head end == 'f' = Kachel 6 (read (drop 1 end))
+            kachelOf (Move start steps end)    | head end == 'a' = Field 1 (read (drop 1 end))
+                                               | head end == 'b' = Field 2 (read (drop 1 end))
+                                               | head end == 'c' = Field 3 (read (drop 1 end))
+                                               | head end == 'd' = Field 4 (read (drop 1 end))
+                                               | head end == 'e' = Field 5 (read (drop 1 end))
+                                               | head end == 'f' = Field 6 (read (drop 1 end))
 instance Show Move where
-           show (Move start schritte end)  =  start++"-"++(show schritte)++"-"++end
+           show (Move start steps end)  =  start++"-"++(show steps)++"-"++end
 
 instance Show Moves where
-            show (Moves aktuell rest) = (show aktuell)++","++(show rest)  
+            show (Moves actual rest) = (show actual)++","++(show rest)  
             show EmptyMove = ""
 instance Show MoveEval where 
-            show (MoveEval move sf bewertung) = show move ++":"++show sf++":"++ show bewertung++"--------------------------------------------"
+            show (MoveEval move sf rating) = show move ++":"++show sf++":"++ show rating++"--------------------------------------------"
 instance Eq MoveEval where
-            (==) mEval1 mEval2  =  bewertung mEval1 == bewertung mEval2
+            (==) mEval1 mEval2  =  rating mEval1 == rating mEval2
 instance Ord MoveEval where
-            (>)  mEval1 mEval2  =  bewertung mEval1 >  bewertung mEval2
-            (<)  mEval1 mEval2  =  bewertung mEval1 <  bewertung mEval2
-            (<=) mEval1 mEval2  =  bewertung mEval1 <= bewertung mEval2
-            (>=) mEval1 mEval2  =  bewertung mEval1 >= bewertung mEval2
-instance Show Feld where
-           show (Kachel spalte zeile) = nshow spalte ++ show zeile
-                             where nshow eingabe  | eingabe == 1 = "a"
-                                                  | eingabe == 2 = "b"
-                                                  | eingabe == 3 = "c"
-                                                  | eingabe == 4 = "d"
-                                                  | eingabe == 5 = "e"
-                                                  | eingabe == 6 = "f"
+            (>)  mEval1 mEval2  =  rating mEval1 >  rating mEval2
+            (<)  mEval1 mEval2  =  rating mEval1 <  rating mEval2
+            (<=) mEval1 mEval2  =  rating mEval1 <= rating mEval2
+            (>=) mEval1 mEval2  =  rating mEval1 >= rating mEval2
+instance Show Field where
+           show (Field column row) = nshow column ++ show row
+                             where nshow input    | input == 1 = "a"
+                                                  | input == 2 = "b"
+                                                  | input == 3 = "c"
+                                                  | input == 4 = "d"
+                                                  | input == 5 = "e"
+                                                  | input == 6 = "f"
                                                   | otherwise    = "x"
-           show (KachelmitValue spalte zeile value) = value++"["++(show (Kachel spalte zeile))++"]"
+           show (FieldwValue column row value) = value++"["++(show (Field column row))++"]"
 
-instance Show Spielbrett where
-                    show (Spielbrett k sf) = show k ++ "  " ++ show sf
-                    show (EmptyFeld)       = ""
---------------------------------------------------------------------------------------------------------------------------------------------
+instance Show GameField where
+                    show (GameField k sf) = show k ++ "  " ++ show sf
+                    show (EmptyField)       = ""
+
 --------------------------------------------------------------------------------------------------------------------------------------------                    
--- ein einfacher sort algorithmus aus dem Haskell Wiki--------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------
+-- a simple sort algortihm 							  --------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------- 
 
 quicksort :: Ord a => [a] -> [a]
 quicksort []     = []
@@ -75,59 +67,55 @@ quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
         greater = filter (>= p) xs
 
 --------------------------------------------------------------------------------------------------------------------------------------------
+----------listMoves und getMove  				--------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
-----------Zielfunktionen ListMoves und getMove  --------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------        
--- diese Funktion kombiniert die anderen Funktionen um so alle möglichen moves auszugeben
+     
+-- returns every possible Move after inputing a completeFen
+-- complete fen :: String [a.e. "rr,rr,rr,rr,rr/,r,,rr,,rr/rrr,rrr,r,,rrr,r r"]
 listMoves :: String -> String
-listMoves eingabe  = movesAsString
-               where fen              = (init (init eingabe))
-                     brett            = konvFenzuSpielbrett fen
-                     brettGefiltert   = filterSpielBrett brett player
-                     player           = last eingabe
-                     moves            = calculateMoves brett player
+listMoves input  = movesAsString
+               where fen              = (init (init input))
+                     field            = convFenToGamefield fen
+                     fieldfiltered   = filterGameField field player
+                     player           = last input
+                     moves            = calculateMoves field player
                      movesNoRedundant = killRedundantMoves moves
-                     movesTooTallRule = filterTooTall movesNoRedundant brettGefiltert
+                     movesTooTallRule = filterTooTall movesNoRedundant fieldfiltered
                      movesAsString    = "["++(init (show movesTooTallRule))++"]"
 
 
 
---gibt mit benutzung aller anderen Methoden den besten Move zurück
+--returns the best rated Move of every possible Move
 --getMove "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/,,,,r,bb r"
 getMove :: String -> String
-getMove eingabe = show (move bestMove) 
-                where fen              = (init (init eingabe))
-                      brett            = konvFenzuSpielbrett fen
-                      brettGefiltert   = filterSpielBrett brett player
-                      player           = last eingabe
-                      moves            = calculateMoves brett player
+getMove input = show (move bestMoveCal) 
+                where fen              = (init (init input))
+                      field            = convFenToGamefield fen
+                      fieldfiltered    = filterGameField field player
+                      player           = last input
+                      moves            = calculateMoves field player
                       movesNoRedundant = killRedundantMoves moves
-                      movesTooTallRule = filterTooTall movesNoRedundant brettGefiltert
-                      allEvals         = allMoveEvals movesTooTallRule player brett
-                      bestMove         = absoluteBestMove allEvals
+                      movesTooTallRule = filterTooTall movesNoRedundant fieldfiltered
+                      allEvals         = allMoveEvals movesTooTallRule player field
+                      bestMoveCal      = bestMove allEvals
    
+
 --------------------------------------------------------------------------------------------------------------------------------------------
+--own implementation of the minimax algorithm ----------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
---Eigentlich sollte hier der MinMax Algorithmus implementiert werden aber ich habe es nicht in der zeit geschafft --------------------------
---daher wird nur nicht berechnet ob der Zug auch für folgende Züge am schlausten ist sondern ganz nach dem Greedy---------------------------
---Algorithmus agiert und der aktuell am besten scheinende Zug genommen und wieder zurückgegeben     ----------------------------------------
---EDIT: Der Code funktioniert jetzt doch und stellt den MINIMAX ALGORITHMUS dar, also wird dieser verwendet             --------------------
---------------------------------------------------------------------------------------------------------------------------------------------
-                                                  
--- wandelt die uebergebenen Moves passend zu dem Spieler in MoveEvals um 
-allMoveEvals :: Moves -> Char->Spielbrett ->[MoveEval]
+
+-- converts Moves into a MoveEval List but with absolute ratings using valMoves
+allMoveEvals :: Moves -> Char->GameField ->[MoveEval]
 allMoveEvals EmptyMove player sf = []
 allMoveEvals (Moves m rest) player sf = (valMoves m player sf) : ( allMoveEvals rest player sf)
 
---vereinfacht das verwenden von valMovesX ( Tailrekursion ) und gibt direkt MoveEvals zurueck
-valMoves::  Move -> Char -> Spielbrett-> MoveEval
-valMoves move player sf = (MoveEval move (afterMove move sf) (valMovesX move sf player player iterationsTiefe))
+--returns a MoveEval with a absolute rating for a given Move
+--calculates a absolute value for a move, with forshadowing future moves (minimax algorithm)
+valMoves::  Move -> Char -> GameField-> MoveEval
+valMoves move player sf = (MoveEval move (afterMove move sf) (valMovesX move sf player player depth))
 
-
---Berechnet mit dem MinMax Algorithmus den Absoluten Rang eines Moves ( Absolut : auch mit Hinsicht auf zukuenftige Spielzustaende)
-valMovesX:: Move -> Spielbrett-> Char -> Char -> Int-> Int
-valMovesX m sf playerstart playeriter 0            = (bewertung (valueMove playerstart m sf))
+valMovesX:: Move -> GameField-> Char -> Char -> Int-> Int
+valMovesX m sf playerstart playeriter 0            = (rating (valueMove playerstart m sf))
                                                             where changePlayer 'r' = 'b'
                                                                   changePlayer 'b' = 'r'
 valMovesX m sf playerstart playeriter iteration    | boardFinished (afterMove m sf) playeriter = 10000 +(10^iteration)
@@ -148,7 +136,7 @@ valMovesX m sf playerstart playeriter iteration    | boardFinished (afterMove m 
                                                                            | min                = 0
                                                           moves            = calculateMoves (afterMove m sf) (changePlayer playeriter)
                                                           movesNoRedundant = killRedundantMoves moves
-                                                          brettGefiltert   = filterSpielBrett (afterMove m sf) (changePlayer playeriter)
+                                                          brettGefiltert   = filterGameField (afterMove m sf) (changePlayer playeriter)
                                                           movesTooTallRule = filterTooTall movesNoRedundant brettGefiltert
 --------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,141 +144,106 @@ valMovesX m sf playerstart playeriter iteration    | boardFinished (afterMove m 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 
--- Testet ob ein Spielbrett schon einen beendeten Zustand aufweist (für den jeweiligen Spieler
-boardFinished :: Spielbrett -> Char -> Bool
-boardFinished  EmptyFeld _                                                                       = True
-boardFinished ( Spielbrett (KachelmitValue spalte zeile value) rest) player | (length value) >=1 = ((head value) == player) && boardFinished rest player
-                                                                            | otherwise          = boardFinished rest player
+-- tests if a GameField is already finished
+boardFinished :: GameField -> Char -> Bool
+boardFinished  EmptyField _                                                                      = True
+boardFinished ( GameField (FieldwValue column row value) rest) player      | (length value) >=1 = ((head value) == player) && boardFinished rest player
+                                                                           | otherwise          = boardFinished rest player
 
--- Ermöglicht Moves für ein Spielbrett eines Players in MoveEvals zu wandeln
-movesAsEvalList:: Moves -> Char-> Spielbrett-> [MoveEval]
+-- Converts Moves for a GameField into a List of MoveEvals
+movesAsEvalList:: Moves -> Char-> GameField-> [MoveEval]
 movesAsEvalList EmptyMove player sf= []
 movesAsEvalList (Moves move rest) player sf | boardFinished (afterMove move sf) player  =  ((MoveEval move (afterMove move sf) 500) : (movesAsEvalList rest player sf))
                                             | otherwise = ((valueMove player move (afterMove move sf)) : (movesAsEvalList rest player sf))
 
--- gibt den Move mit der besten bewertung zurück wobei die liste MoveEval hierbei am besten schon MoveEvals mit bewertungen nach dem MinMax Algorithmus hat
-absoluteBestMove:: [MoveEval] -> MoveEval
-absoluteBestMove m = ((bestMoveEval m 0 (MoveEval (Move "x1" 1 "x1") EmptyFeld (0))))
 
-
--- gibt den Besten MoveEval in einer Liste von MoveEvals zurück wobei bester sich auf die bewertung bezieht
-bestMoveEval:: [MoveEval]-> Int -> MoveEval ->MoveEval
-bestMoveEval []     s m                     = m
-bestMoveEval (x:xs) s m| (bewertung x >  s) =  bestMoveEval xs (bewertung x) x
-bestMoveEval (x:xs) s m| (bewertung x <= s) =  bestMoveEval xs s m
-
--- Bestimmt aus einer Liste mit MoveEvals die zweit bestbewerteten MoveEvals und gibt diese in einer Liste zurück
+-- gets a MoveEval List and returns the two best rated of them
 bestMoves:: [MoveEval] -> [MoveEval]
 bestMoves movesEval = drop (laengeListe-2) (quicksort movesEval)
                         where laengeListe =  length (quicksort movesEval)
 
--- Nimmt aus einer Liste mit MoveEvals ( welche mit bestMoves bearbeitet wurde ) den besseren Moveeval ( funktioniert nicht so abstrakt wie bestMoveEval)
+-- gets a list of MoveEvals and returns the one with the best rating
 bestMove:: [MoveEval] -> MoveEval
 bestMove   movesEval  =  last (quicksort movesEval)
             
             
--- Bewertet Spielfelder nach folgender Regel :
--- Jeder Stein des übergebenen Spielers zaehlt 10 bis auf die steine auf tooTall Stapeln ( die ersten vier 10 rest 5 ) 
-valueBoard:: Spielbrett ->Char -> Int
+-- rates gamefield by following ruleset :
+--every stone of the given player adds 10 to the complete point count, but if there are more than 4 stones on a position,
+--the points for this position are counted 10 for the first 4 stones and 5 for every stone afterwards
+valueBoard:: GameField ->Char -> Int
 valueBoard sf player = case sf of 
-                            EmptyFeld                                           -> 0
-                            Spielbrett (KachelmitValue spalte zeile value) rest -> if   val==player 
+                            EmptyField                                           -> 0
+                            GameField (FieldwValue column row value) rest -> if   val==player 
                                                                                    then (wert value)+ (valueBoard rest player) 
                                                                                    else (valueBoard rest player)
                                                                                      where wert x | (length x) < 5    = ((length x) *10)
                                                                                                   | otherwise         = 40 + (((length x)-4)*5)
                                                                                            val    | length value >= 1 = head value
                                                                                                   | otherwise         = 'x'
--- bewertet einen Move mit und gibt ein MoveEval zurueck
-valueMove :: Char -> Move -> Spielbrett -> MoveEval
+-- values a Move and returns a MoveEval Data
+valueMove :: Char -> Move -> GameField -> MoveEval
 valueMove player move sf = (MoveEval move sf (valueBoard (afterMove move sf) player))
     
 -------------------------------------------------------------------------------------
-----Zur Bestimmung des Spielfelds, nachdem ein Move gemacht wurde     ---------------
+----Calculation of a GameField after a given Move is made 		      ---------------
 -------------------------------------------------------------------------------------
 
---aendert die startkachel auf den neuen wert nach move
-afterMoveStart :: Move -> Spielbrett -> Spielbrett
-afterMoveStart move ( Spielbrett (KachelmitValue spalte zeile value) rest) |  start move == (show (Kachel spalte zeile )) = (Spielbrett (KachelmitValue spalte zeile newVal) rest)
-                                                                           |  otherwise                                   = (Spielbrett (KachelmitValue spalte zeile value) (afterMoveStart move rest))
-                                                                                where newVal = drop (schritte move) value
--- fuegt die bewegten steine auf die neue endkachel
-afterMoveEnd:: Move -> Spielbrett -> Spielbrett ->  Spielbrett
-afterMoveEnd move EmptyFeld sf                                             = (Spielbrett (KachelmitValue (spalte (kachelOf move)) (zeile (kachelOf move)) (searchVal move sf)) EmptyFeld)
-afterMoveEnd move (Spielbrett (KachelmitValue spalte zeile value) rest) sf |  end move == (show (Kachel spalte zeile )) = (Spielbrett (KachelmitValue spalte zeile ((searchVal move sf)++value)) rest)
-                                                                           |  otherwise                                 = (Spielbrett (KachelmitValue spalte zeile value) (afterMoveEnd move rest sf))
--- Kompakte Methode um Spielbrett nach einem Move zu erhalten
-afterMove :: Move -> Spielbrett -> Spielbrett
+
+--this method returns a GameField Data after a move is made 
+afterMove :: Move -> GameField  -> GameField 
 afterMove move sf = afterMoveEnd move (afterMoveStart move sf) sf
 
+--changes the endPos on the gameField
+afterMoveEnd:: Move -> GameField -> GameField  ->  GameField 
+afterMoveEnd move EmptyField sf                                             = (GameField  (FieldwValue (column (kachelOf move)) (row (kachelOf move)) (searchVal move sf)) EmptyField)
+afterMoveEnd move (GameField  (FieldwValue column row value) rest) sf      |  end move == (show (Field column row ))    = (GameField  (FieldwValue column row ((searchVal move sf)++value)) rest)
+                                                                           |  otherwise                                 = (GameField  (FieldwValue column row value) (afterMoveEnd move rest sf))
+--changes the startPos on the gameField
+afterMoveStart :: Move -> GameField -> GameField 
+afterMoveStart move ( GameField (FieldwValue column row value) rest)      |  start move == (show (Field column row ))    = (GameField (FieldwValue column row newVal) rest)
+                                                                          |  otherwise                                   = (GameField (FieldwValue column row value) (afterMoveStart move rest))
+                                                                                where newVal = drop (steps move) value
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
---Sucht die zu bewegnden steine auf dem Spielbrett
-searchVal :: Move-> Spielbrett -> String
-searchVal move ( Spielbrett (KachelmitValue spalte zeile value) rest)  |  start move == (show (Kachel spalte zeile )) = take (schritte move) value
+--searches the stones, which have to be moved
+--parameters Move and GameField
+searchVal :: Move-> GameField  -> String
+searchVal move ( GameField  (FieldwValue column row value) rest)       |  start move == (show (Field column row ))    = take (steps move) value
                                                                        |  otherwise                                   = searchVal move rest
 
-
-
-
-
---Hier werden die Moves für einen bestimmten spieler für ein vorgebenes Spielfeld bestimmt indem man die
---8 moeglichen Moves (alle kombinationen aus Moeglichen Zeilen und Spalten) für jede Kachel auf der sich Stapel des Spielers befinden in ein Moveset tut
-calculateMoves :: Spielbrett -> Char -> Moves 
-calculateMoves spielbrett player = case spielbrett of
-                                 EmptyFeld                                         -> EmptyMove
-                                 Spielbrett (KachelmitValue spalte zeile value) sf -> if (not (null value)) && player == (head value) then combinePossible (KachelmitValue spalte zeile value) (length value) else calculateMoves sf player
-                                            where combinePossible (KachelmitValue spalte zeile value) steps | steps-1 > (-1) =  Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel spalte (getPossiblePos zeile steps )))) 
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel spalte (getPossibleNeg zeile steps )))) 
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossiblePos spalte steps ) zeile)))
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossibleNeg spalte steps ) zeile)))
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossiblePos spalte steps ) (getPossiblePos zeile steps ))))
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossibleNeg spalte steps ) (getPossibleNeg zeile steps ))))
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossibleNeg spalte steps ) (getPossiblePos zeile steps ))))
-                                                                                                                               (Moves (Move (show (Kachel spalte zeile)) steps (show (Kachel (getPossiblePos spalte steps ) (getPossibleNeg zeile steps ))))
-                                                                                                                               (combinePossible (KachelmitValue spalte zeile value) (steps-1)))))))))
-                                                                                                            | otherwise      =  calculateMoves sf player
+--calculates every possible move for a given GameField and a given Player and returns Moves Data
+calculateMoves :: GameField  -> Char -> Moves 
+calculateMoves gameField  player = case gameField of
+                                 EmptyField                                         -> EmptyMove
+                                 GameField  (FieldwValue column row value) sf -> if (not (null value)) && player == (head value) then combinePossible (FieldwValue column row value) (length value) else calculateMoves sf player
+                                            where combinePossible (FieldwValue column row value) steps  | steps-1 > (-1) =  Moves (Move (show (Field column row)) steps (show (Field column (getPossiblePos row steps )))) 
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field column (getPossibleNeg row steps )))) 
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossiblePos column steps ) row)))
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossibleNeg column steps ) row)))
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossiblePos column steps ) (getPossiblePos row steps ))))
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossibleNeg column steps ) (getPossibleNeg row steps ))))
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossibleNeg column steps ) (getPossiblePos row steps ))))
+                                                                                                                               (Moves (Move (show (Field column row)) steps (show (Field (getPossiblePos column steps ) (getPossibleNeg row steps ))))
+                                                                                                                               (combinePossible (FieldwValue column row value) (steps-1)))))))))
+                                                                                                        | otherwise      =  calculateMoves sf player
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
---------------HILFSFUNKTIONEN ZUR VERARBEITUNG----------------------------------------------------------------------------------------------
+--------------Helping Functions-------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------
 
+-- converts a fenString into a GameField
+convFenToGamefield :: String -> GameField
+convFenToGamefield fen = convFenToGamefieldRek fen width_height 1
 
--- Zum Testen ( HUnit wollte nicht funktionieren) 
--- konvFenzuSpielbrett "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb" 
--- listMovesasMoves "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r" 
--- getMove "r,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb b" 
--- getMove ",,r,,brr,/,,,rb,,/,brbr,,,,/rbbr,b,r,r,bb,/,r,,bb,,r/b,,,,, b" 
--- movesAsEvalList (listMovesasMoves  "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb b") 'b' (konvFenzuSpielbrett "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb")
--- show (bestMove (movesAsEvalList (listMovesasMoves  "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb b") 'b' (konvFenzuSpielbrett "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb")))
--- show (bestMoves (movesAsEvalList (listMovesasMoves  "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r") 'r' (konvFenzuSpielbrett "rr,b,,,,/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb")))
--- listMoves "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r" 
-
-
--- Diese Funktion bekommt eine Notation wie in der Aufgabe definiert und gibt alle Moves als Moves zurück 
-listMovesasMoves :: String -> Moves 
-listMovesasMoves eingabe  = movesTooTallRule
-               where fen              = (init (init eingabe))
-                     brett            = konvFenzuSpielbrett fen
-                     brettGefiltert   = filterSpielBrett brett player
-                     player           = last eingabe
-                     moves            = calculateMoves brett player
-                     movesNoRedundant = killRedundantMoves moves
-                     movesTooTallRule = filterTooTall movesNoRedundant brettGefiltert
-                     
--- diese Funktion wandelt einen String in fen Notation in ein Spielbrett um
-
-konvFenzuSpielbrett :: String -> Spielbrett
-konvFenzuSpielbrett fen = konvFenzuSpielbrettTailRek fen width_height 1
-
-konvFenzuSpielbrettTailRek :: String -> Int -> Int -> Spielbrett
-konvFenzuSpielbrettTailRek fen row col | (fen      =="" ) =  EmptyFeld
-                                       | (head fen ==',') = (konvFenzuSpielbrettTailRek (tail fen) row (col+1))
-                                       | (head fen =='/') = (konvFenzuSpielbrettTailRek (tail fen) (row-1) 1)
-                                       |  otherwise       =  Spielbrett (KachelmitValue col row (getKachelVal fen)) (konvFenzuSpielbrettTailRek (nextKachel fen) row col)
+convFenToGamefieldRek :: String -> Int -> Int -> GameField
+convFenToGamefieldRek fen row col | (fen      =="" ) =  EmptyField
+                                  | (head fen ==',') = (convFenToGamefieldRek (tail fen) row (col+1))
+                                  | (head fen =='/') = (convFenToGamefieldRek (tail fen) (row-1) 1)
+                                  |  otherwise       =  GameField (FieldwValue col row (getKachelVal fen)) (convFenToGamefieldRek (nextKachel fen) row col)
                                                                 where getKachelVal s  | s      == []  = ""
                                                                                       | head s == 'b' = head s : (getKachelVal (tail s))
                                                                                       | head s == 'r' = head s : (getKachelVal (tail s))
@@ -300,53 +253,46 @@ konvFenzuSpielbrettTailRek fen row col | (fen      =="" ) =  EmptyFeld
                                                                                       | head s == 'r' = nextKachel (tail s)
                                                                                       | otherwise     = s
                                     
--- Filtert das Spielbrett auf die Kacheln die mehr als 4 Steine stehen haben
-filterSpielBrett :: Spielbrett -> Char -> Spielbrett
-filterSpielBrett EmptyFeld _= EmptyFeld
-filterSpielBrett (Spielbrett (KachelmitValue spalte zeile value) sf) player | ( length value) > 4 && (head value) ==player = (Spielbrett (KachelmitValue spalte zeile value) EmptyFeld)
-                                                                            |  otherwise                                   =  filterSpielBrett sf player
--- bekommt die berechneten gesamt moves und ein Spielbrett, und filtert die Moves passend zu der ersten Kachel des Spielfelds
--- das Spielfeld sollte vorher gefiltert werden denn es wird die tooTall Regel angewandt
-filterTooTall :: Moves -> Spielbrett-> Moves 
-filterTooTall moves EmptyFeld   =  moves
-filterTooTall moves sf          = (filterTooTallX moves (kachel sf))
--- Es werden die Moves überprüft ob sie gültig sind nach der TooTall regel
--- falls ja werden die gültigen Moves bestimmt
-filterTooTallX :: Moves -> Feld   -> Moves 
-filterTooTallX  EmptyMove _                                             = EmptyMove
-filterTooTallX (Moves aktuell rest) (KachelmitValue spalte zeile value)  | (length value)-(schritte aktuell) >4              =  filterTooTallX rest (KachelmitValue spalte zeile value)
-                                                                         | (show (Kachel spalte zeile) )== (start aktuell)   = (Moves aktuell (filterTooTallX rest (KachelmitValue spalte zeile value)))
-                                                                         | otherwise                                         =  filterTooTallX rest (KachelmitValue spalte zeile value)
+-- filters a GameField to fields with more then 4 stones 
+filterGameField :: GameField -> Char -> GameField
+filterGameField EmptyField _= EmptyField
+filterGameField (GameField (FieldwValue column row value) sf) player        | ( length value) > 4 && (head value) ==player = (GameField (FieldwValue column row value) EmptyField)
+                                                                            |  otherwise                                   =  filterGameField sf player
+-- search a gamefield for a TooTall Field, if one exists, then it will be returned [ should be used with filtered fields only]
+filterTooTall :: Moves -> GameField-> Moves 
+filterTooTall moves EmptyField   =  moves
+filterTooTall moves sf          = (filterTooTallX moves (field sf))
 
---Es werden die Moves übergeben und Redundante Moves entfernt
+filterTooTallX :: Moves -> Field   -> Moves 
+filterTooTallX  EmptyMove _                                            = EmptyMove
+filterTooTallX (Moves actual rest) (FieldwValue column row value)      | (length value)-(steps actual) >4              =  filterTooTallX rest (FieldwValue column row value)
+                                                                       | (show (Field column row) )== (start actual)      = (Moves actual (filterTooTallX rest (FieldwValue column row value)))
+                                                                       | otherwise                                         =  filterTooTallX rest (FieldwValue column row value)
+
+--This function gets Moves as parameter and and deletes duplicates 
 killRedundantMoves :: Moves -> Moves 
 killRedundantMoves moves = killRedundantMovesX moves [] 
--- durch Tail rekursion wird jeder Move der in die Liste seen kommt nur einmal in die Ausgabe genommen 
--- es wird also für jeden Move überprüft ob dieser element von seen ist und falls ja wird der aktuelle Move nicht in das neue Moveset aufgenommen
+
 killRedundantMovesX :: Moves -> [String]  -> Moves 
 killRedundantMovesX  EmptyMove _                                                  = EmptyMove
-killRedundantMovesX (Moves aktuell rest)  seen | (start aktuell) == (end aktuell) = killRedundantMovesX rest seen
-                                               | (show aktuell) `elem` seen       = killRedundantMovesX rest seen
-                                               | otherwise                        = (Moves aktuell (killRedundantMovesX rest ((show aktuell):seen)))
+killRedundantMovesX (Moves actual rest)  seen  | (start actual) == (end actual)   = killRedundantMovesX rest seen
+                                               | (show actual) `elem` seen        = killRedundantMovesX rest seen
+                                               | otherwise                        = (Moves actual (killRedundantMovesX rest ((show actual):seen)))
 
---Es werden die moeglichkeiten berechnet auf einer bestimmten Zeile/Spalte(je nachdem ob pos die zeile oder spalte wiederspiegelt) zu landen,
--- wenn man sich nach oben oder rechts bewegt
+--this method calculates possible new positions for moves to the rigth and up
 getPossiblePosX:: Int -> Int-> Int -> Int  -> Int
-getPossiblePosX pos count schritte distance | (distance-1) >(width_height-1) = getPossiblePosX pos (count+1) schritte (distance-(width_height-1)) 
-                                            |  otherwise                     = (spiegel (distance-1) count) +1
+getPossiblePosX pos count steps distance    | (distance-1) >(width_height-1) = getPossiblePosX pos (count+1) steps (distance-(width_height-1)) 
+                                            |  otherwise                     = (reflection (distance-1) count) +1
 getPossiblePos:: Int -> Int   -> Int
-getPossiblePos pos schritte =getPossiblePosX pos 0 schritte (pos+ schritte) 
---Es werden die moeglichkeiten berechnet auf einer bestimmten Zeile/Spalte(je nachdem ob pos die zeile oder spalte wiederspiegelt) zu landen,
--- wenn man sich nach unten oder links bewegt
+getPossiblePos pos steps =getPossiblePosX pos 0 steps (pos+ steps) 
+--this method calculates possible new positions for moves to the left and down
 getPossibleNegX:: Int -> Int-> Int -> Int -> Int
-getPossibleNegX pos count schritte distance | (distance-1) <0                = (getPossibleNegX pos (count+1) schritte (distance+(width_height-1))) 
-                                            |  otherwise                     = (spiegel (distance-1) count) +1
+getPossibleNegX pos count steps distance    | (distance-1) <0                = (getPossibleNegX pos (count+1) steps (distance+(width_height-1))) 
+                                            |  otherwise                     = (reflection (distance-1) count) +1
 getPossibleNeg:: Int -> Int  -> Int
-getPossibleNeg pos schritte  =getPossibleNegX pos 0 schritte (pos- schritte) 
+getPossibleNeg pos steps  =getPossibleNegX pos 0 steps (pos- steps) 
  
---Diese Funktion stellt die Spiegelung an den Raendern des Spielfelds dar hierzu bekommt sie die ermittelte distance, also die Anzahl an Feldern die 
---Die Figuren wirklich bewegt werden, und einen count welcher bestimmt auf welcher Spiegelung sich die Steine befinden
-spiegel:: Int -> Int -> Int
-spiegel distance count | (count  `mod` 2 ) ==0 = distance 
-                       | otherwise             =(width_height-distance -1)
-
+--this method helps calculating positions after reflection
+reflection:: Int -> Int -> Int
+reflection distance count | (count  `mod` 2 ) ==0 = distance 
+                          | otherwise             =(width_height-distance -1)
