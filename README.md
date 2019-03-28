@@ -1,19 +1,86 @@
 # dsBotHaskell
-Bot for DeathStacks <br>
+Bot for DeathStacks ( Boardgame ) <br>
 
 This is a bot written in Haskell.  <br>
 It was a university project, which I wanted to share.  <br>
 This bot uses fen notation.  <br>
 Fen notation contains gamefield information AND the next player.  <br>
 As example "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r"  <br> 
-stands for red player next and GameField :  <br>
-6[rr,rr,rr,rr,rr,rr]  <br>
-5[--,--,--,--,--,--]  <br>
-4[--,--,--,--,--,--]  <br>
-3[--,--,--,--,--,--]  <br>
-2[--,--,--,--,--,--]  <br>
-1[bb,bb,bb,bb,bb,bb]  <br>
-columns : a b c d e f    <br>
+stands for red player = next and GameField : <br>
+<table>
+  <tr>
+<th></th>
+<th>a</th>
+<th>b</th>
+<th>c</th>
+<th>d</th>
+<th>e</th>
+<th>f</th>
+
+  </tr>
+<tr> 
+<td> 	6</td> 
+<td> rr</td>
+<td> rr</td>
+<td> rr</td>
+<td> rr</td>
+<td> rr</td>
+<td> rr</td>
+
+</tr>
+<tr> 
+<td> 	5</td> 
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+
+</tr>
+<tr> 
+	<td> 	4</td> 
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+
+</tr>
+<tr> 
+	<td> 	3</td> 
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+
+</tr>
+<tr> 
+	<td> 	2</td> 
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+<td> </td>
+
+</tr>
+<tr> 
+	<td> 	1</td> 
+<td> bb</td>
+<td> bb</td>
+<td> bb</td>
+<td> bb</td>
+<td> bb</td>
+<td> bb</td>
+
+</tr>
+
+</table>
+
 Two characters are reserved for players: 'b' for blue and 'r' for red  <br>
 This bot has two main functionalities:  <br>
 listMoves fenNotation  <br>
