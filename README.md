@@ -1,5 +1,5 @@
 # dsBotHaskell
-Bot for DeathStacks ( Boardgame ) <br>
+Bot for Death Stacks  ( Boardgame ) <br>
 
 This is a bot written in Haskell.  <br>
 It was a university project, which I wanted to share.  <br>
