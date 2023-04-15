@@ -1,12 +1,18 @@
-# dsBotHaskell
-Bot for Death Stacks  ( Boardgame ) <br>
+# DeathStack AI
+This is a bot for a not so well game called DeathStack.  
+The AI uses the minmax algorithm to determine which moves are the best.
 
-This is a bot written in Haskell.  <br>
-It was a university project, which I wanted to share.  <br>
-This bot uses fen notation.  <br>
-Fen notation contains gamefield information AND the next player.  <br>
-As example "rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r"  <br> 
-stands for red player = next and GameField : <br>
+To make it feasible to run, it will only check up to X layers in the tree of possible moves.
+
+It will use [Forsth-Edwards Notation (FEN)](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)
+
+The notation string contains gamefield information and the next player.  
+As an example FEN string: `"rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,bb,bb,bb r"`
+
+As the notation ends with a whitespace followed by an r, this means that the next player is red.
+
+The graphical mapping might look like this:
+
 <table>
   <tr>
 <th></th>
@@ -82,14 +88,14 @@ stands for red player = next and GameField : <br>
 </table>
 
 Two characters are reserved for players: 'b' for blue and 'r' for red  <br>
-This bot has two main functionalities:  <br>
-listMoves fenNotation  <br>
--> prints possible moves into the console  <br>
--> Moves are printed in this form : a1-2-a3 etc  <br>
--> console print is similiar to "[startposition-steps-endposition,.....,.....,....]"  <br>
-getMove fenNotation  <br>
--> prints only one move into the console  <br>
--> printed in this form : "[a1-2-a3]"  <br>
--> the move which is printed, is choosen by a implementation of the minimax algorithm and chooses the best move [best for this implementation]  <br>
+This bot has two main functionalities:  
+listMoves fenNotation  
+- prints possible moves into the console    
+- Moves are printed in this form : a1-2-a3 etc    
+- console print is similiar to "[startposition-steps-endposition,.....,.....,....]"   
+getMove fenNotation  
+- prints only one move into the console   
+- printed in this form : "[a1-2-a3]"   
+- the move which is printed, is choosen by a implementation of the minimax algorithm and chooses the best move [best for this implementation]   
 
 
