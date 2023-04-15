@@ -93,6 +93,7 @@ listMoves fenNotation
 - prints possible moves into the console    
 - Moves are printed in this form : a1-2-a3 etc    
 - console print is similiar to "[startposition-steps-endposition,.....,.....,....]"   
+
 getMove fenNotation  
 - prints only one move into the console   
 - printed in this form : "[a1-2-a3]"   
