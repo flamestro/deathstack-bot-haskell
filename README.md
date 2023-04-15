@@ -11,7 +11,7 @@ As an example FEN string: `"rr,rr,rr,rr,rr,rr/,,,,,/,,,,,/,,,,,/,,,,,/bb,bb,bb,b
 
 As the notation ends with a whitespace followed by an r, this means that the next player is red.
 
-The graphical mapping might look like this:
+The graphical mapping of the gamefield looks like this:
 
 <table>
   <tr>
